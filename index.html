@@ -1,4 +1,4 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -8,12 +8,14 @@
       content="A premium reaction timer game built with HTML, CSS, JavaScript, and Three.js."
     />
     <title>Neon Reflex. Reaction Timer</title>
+
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap"
       rel="stylesheet"
     />
+
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
@@ -22,15 +24,16 @@
       <div class="bg-grid" aria-hidden="true"></div>
       <div class="bg-glow bg-glow-1" aria-hidden="true"></div>
       <div class="bg-glow bg-glow-2" aria-hidden="true"></div>
+
       <main class="app" aria-labelledby="page-title">
         <section class="panel" data-state="idle">
           <div class="eyebrow">Portfolio Micro Interaction</div>
           <h1 id="page-title">Neon Reflex</h1>
           <p class="lede">
-            Test your reaction time against a clean visual cue. Start the run,
-            wait for the signal, then respond the instant the interface snaps
-            alive.
+            Test your reaction time against a clean visual cue. Start the run, wait for the signal,
+            then respond the instant the interface snaps alive.
           </p>
+
           <div
             class="status-card"
             id="status-card"
@@ -43,34 +46,29 @@
             <div class="status-badge" id="state-badge">Idle</div>
             <div class="status-title" id="status-title">Ready when you are</div>
             <p class="status-copy" id="status-copy">
-              Press <strong>Start</strong>, or hit <strong>Space</strong> or
-              <strong>Enter</strong> to begin.
+              Press <strong>Start</strong>, or hit <strong>Space</strong> or <strong>Enter</strong> to begin.
             </p>
-            <div class="status-timing" id="timing-display" aria-hidden="true">
-              ---
-            </div>
+            <div class="status-timing" id="timing-display" aria-hidden="true">---</div>
             <div class="status-prompt" id="status-prompt">Awaiting input</div>
           </div>
+
           <p class="sr-only" id="status-help">
-            Use mouse, touch, Space, or Enter. During the waiting state,
-            reacting too early will count as a false start.
+            Use mouse, touch, Space, or Enter. During the waiting state, reacting too early will count as a false start.
           </p>
+
           <div class="controls">
             <button class="button button-primary" id="start-btn" type="button">
               Start Test
             </button>
-            <button
-              class="button button-secondary"
-              id="retry-btn"
-              type="button"
-              hidden
-            >
+            <button class="button button-secondary" id="retry-btn" type="button" hidden>
               Try Again
             </button>
             <label class="toggle" for="sound-toggle">
-              <input type="checkbox" id="sound-toggle" /> <span>Sound</span>
+              <input type="checkbox" id="sound-toggle" />
+              <span>Sound</span>
             </label>
           </div>
+
           <section class="stats" aria-label="Session stats">
             <article class="stat">
               <span class="stat-label">Best</span>
@@ -85,22 +83,20 @@
               <strong class="stat-value mono" id="attempt-count">0</strong>
             </article>
           </section>
+
           <section class="history" aria-labelledby="history-title">
             <div class="history-head">
               <h2 id="history-title">Recent Attempts</h2>
-              <button class="text-button" id="reset-stats-btn" type="button">
-                Reset stats
-              </button>
+              <button class="text-button" id="reset-stats-btn" type="button">Reset stats</button>
             </div>
             <ul class="history-list" id="history-list">
-              <li class="history-empty">
-                No attempts yet. Your numbers will appear here.
-              </li>
+              <li class="history-empty">No attempts yet. Your numbers will appear here.</li>
             </ul>
           </section>
         </section>
       </main>
     </div>
+
     <script type="module" src="script.js"></script>
   </body>
 </html>

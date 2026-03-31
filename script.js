@@ -1,6 +1,8 @@
 import * as THREE from "https://unpkg.com/three@0.162.0/build/three.module.js";
+
 const STORAGE_KEY = "neon-reflex-stats-v1";
 const MAX_HISTORY = 8;
+
 const state = {
   phase: "idle",
   startTime: 0,
@@ -10,21 +12,25 @@ const state = {
   stats: loadStats(),
   reduceMotion: window.matchMedia("(prefers-reduced-motion: reduce)").matches,
 };
+
 const panel = document.querySelector(".panel");
 const statusCard = document.getElementById("status-card");
 const startBtn = document.getElementById("start-btn");
 const retryBtn = document.getElementById("retry-btn");
 const soundToggle = document.getElementById("sound-toggle");
 const resetStatsBtn = document.getElementById("reset-stats-btn");
+
 const stateBadge = document.getElementById("state-badge");
 const statusTitle = document.getElementById("status-title");
 const statusCopy = document.getElementById("status-copy");
 const timingDisplay = document.getElementById("timing-display");
 const statusPrompt = document.getElementById("status-prompt");
+
 const bestScoreEl = document.getElementById("best-score");
 const averageScoreEl = document.getElementById("average-score");
 const attemptCountEl = document.getElementById("attempt-count");
 const historyListEl = document.getElementById("history-list");
+
 const uiCopy = {
   idle: {
     badge: "Idle",
@@ -62,79 +68,93 @@ const uiCopy = {
     prompt: "Press Try Again",
   },
 };
+
 const sceneController = createScene(document.getElementById("scene"), {
   reduceMotion: state.reduceMotion,
 });
+
 init();
+
 function init() {
   soundToggle.checked = state.soundEnabled;
   updateStatsUI();
   setPhase("idle");
+
   startBtn.addEventListener("click", startTest);
   retryBtn.addEventListener("click", resetToIdle);
   soundToggle.addEventListener("change", () => {
     state.soundEnabled = soundToggle.checked;
   });
   resetStatsBtn.addEventListener("click", resetStats);
-  statusCard.addEventListener("click", handlePrimaryAction);
-  statusCard.addEventListener("touchstart", handleTouchAction, {
-    passive: true,
-  });
+
+  statusCard.addEventListener("pointerup", handlePrimaryAction);
+
   window.addEventListener("keydown", handleKeydown);
   window.addEventListener("resize", () => sceneController.resize());
 }
+
 function handlePrimaryAction() {
   if (state.phase === "idle") {
     startTest();
     return;
   }
+
   if (state.phase === "waiting") {
     triggerFalseStart();
     return;
   }
+
   if (state.phase === "ready") {
     captureReaction();
     return;
   }
+
   if (state.phase === "result" || state.phase === "error") {
     resetToIdle();
   }
 }
-function handleTouchAction() {
-  handlePrimaryAction();
-}
+
 function handleKeydown(event) {
   const key = event.key;
   const isTrigger = key === " " || key === "Enter";
   if (!isTrigger) return;
+
   const targetTag = document.activeElement?.tagName;
   const typingContext = targetTag === "INPUT" || targetTag === "TEXTAREA";
   if (typingContext) return;
+
   event.preventDefault();
+
   if (state.phase === "idle") {
     startTest();
     return;
   }
+
   if (state.phase === "waiting") {
     triggerFalseStart();
     return;
   }
+
   if (state.phase === "ready") {
     captureReaction();
     return;
   }
+
   if (state.phase === "result" || state.phase === "error") {
     resetToIdle();
   }
 }
+
 function startTest() {
   clearPendingWait();
   state.readyLocked = false;
   setPhase("waiting");
   retryBtn.hidden = true;
   startBtn.hidden = true;
+
   const delay = randomBetween(1600, 4200);
   sceneController.setMood("waiting");
+
   state.waitTimeout = window.setTimeout(() => {
     state.startTime = performance.now();
     state.readyLocked = true;
@@ -144,20 +164,27 @@ function startTest() {
     if (state.soundEnabled) playTone(720, 0.08, "triangle");
   }, delay);
 }
+
 function captureReaction() {
   if (state.phase !== "ready" || !state.readyLocked) return;
+
   const elapsed = performance.now() - state.startTime;
   const rounded = Math.round(elapsed);
+
   state.readyLocked = false;
   setPhase("result", `${rounded} ms`);
   retryBtn.hidden = false;
   startBtn.hidden = true;
+
+  applyReactionRating(rounded);
   addScore(rounded);
   sceneController.setMood("result");
   if (state.soundEnabled) playTone(420, 0.1, "sine");
 }
+
 function triggerFalseStart() {
   if (state.phase !== "waiting") return;
+
   clearPendingWait();
   state.readyLocked = false;
   setPhase("error");
@@ -166,6 +193,7 @@ function triggerFalseStart() {
   sceneController.setMood("error");
   if (state.soundEnabled) playTone(180, 0.12, "sawtooth");
 }
+
 function resetToIdle() {
   clearPendingWait();
   state.readyLocked = false;
@@ -174,21 +202,25 @@ function resetToIdle() {
   retryBtn.hidden = true;
   sceneController.setMood("idle");
 }
+
 function clearPendingWait() {
   if (state.waitTimeout) {
     window.clearTimeout(state.waitTimeout);
     state.waitTimeout = null;
   }
 }
+
 function setPhase(phase, timingOverride = null) {
   state.phase = phase;
   panel.dataset.state = phase;
+
   const copy = uiCopy[phase];
   stateBadge.textContent = copy.badge;
   statusTitle.textContent = copy.title;
   statusCopy.textContent = copy.copy;
   timingDisplay.textContent = timingOverride ?? copy.timing;
   statusPrompt.textContent = copy.prompt;
+
   if (phase === "ready") {
     statusCard.setAttribute("aria-label", "Cue active. React now.");
   } else if (phase === "waiting") {
@@ -196,35 +228,39 @@ function setPhase(phase, timingOverride = null) {
   } else if (phase === "error") {
     statusCard.setAttribute("aria-label", "False start. Try again.");
   } else if (phase === "result") {
-    statusCard.setAttribute(
-      "aria-label",
-      `Result recorded. ${timingOverride}.`,
-    );
+    statusCard.setAttribute("aria-label", `Result recorded. ${timingOverride}.`);
   } else {
-    statusCard.setAttribute(
-      "aria-label",
-      "Reaction test area. Press Start, then wait for the cue.",
-    );
+    statusCard.setAttribute("aria-label", "Reaction test area. Press Start, then wait for the cue.");
   }
 }
+
 function addScore(score) {
-  state.stats.attempts.push({ value: score, at: new Date().toISOString() });
+  state.stats.attempts.push({
+    value: score,
+    at: new Date().toISOString(),
+  });
+
   if (state.stats.attempts.length > MAX_HISTORY) {
     state.stats.attempts = state.stats.attempts.slice(-MAX_HISTORY);
   }
+
   saveStats(state.stats);
   updateStatsUI();
 }
+
 function updateStatsUI() {
   const values = state.stats.attempts.map((entry) => entry.value);
   const best = values.length ? Math.min(...values) : null;
   const average = values.length
     ? Math.round(values.reduce((sum, value) => sum + value, 0) / values.length)
     : null;
+
   bestScoreEl.textContent = best !== null ? `${best} ms` : "-- ms";
   averageScoreEl.textContent = average !== null ? `${average} ms` : "-- ms";
   attemptCountEl.textContent = String(values.length);
+
   historyListEl.innerHTML = "";
+
   if (!values.length) {
     const empty = document.createElement("li");
     empty.className = "history-empty";
@@ -232,23 +268,87 @@ function updateStatsUI() {
     historyListEl.appendChild(empty);
     return;
   }
-  [...state.stats.attempts].reverse().forEach((attempt, index) => {
-    const item = document.createElement("li");
-    const label = document.createElement("span");
-    label.textContent =
-      index === 0 ? "Most recent" : `Attempt ${values.length - index}`;
-    const value = document.createElement("span");
-    value.className = "history-score";
-    value.textContent = `${attempt.value} ms`;
-    item.append(label, value);
-    historyListEl.appendChild(item);
-  });
+
+  [...state.stats.attempts]
+    .reverse()
+    .forEach((attempt, index) => {
+      const item = document.createElement("li");
+
+      const label = document.createElement("span");
+      label.textContent = index === 0 ? "Most recent" : `Attempt ${values.length - index}`;
+
+      const value = document.createElement("span");
+      value.className = "history-score";
+      value.textContent = `${attempt.value} ms`;
+
+      item.append(label, value);
+      historyListEl.appendChild(item);
+    });
 }
+
 function resetStats() {
   state.stats = { attempts: [] };
   saveStats(state.stats);
   updateStatsUI();
 }
+
+function applyReactionRating(score) {
+  const rating = getReactionRating(score);
+  stateBadge.textContent = rating.badge;
+  statusTitle.textContent = rating.title;
+  statusCopy.textContent = rating.copy;
+  statusPrompt.textContent = rating.prompt;
+  statusCard.setAttribute(
+    "aria-label",
+    `Result recorded. ${score} milliseconds. ${rating.badge}. ${rating.title}.`
+  );
+}
+
+function getReactionRating(score) {
+  if (score <= 160) {
+    return {
+      badge: "Excellent",
+      title: "Illegal in at least three timelines",
+      copy: "That was absurdly fast. Either your reflexes are elite, or you briefly borrowed tomorrow's internet.",
+      prompt: "Excellent · Run it back if you dare",
+    };
+  }
+
+  if (score <= 220) {
+    return {
+      badge: "Great",
+      title: "Reflexes with main-character energy",
+      copy: "Clean, sharp, and just a little intimidating. You did not come here to hesitate.",
+      prompt: "Great · Press Try Again or hit Space",
+    };
+  }
+
+  if (score <= 280) {
+    return {
+      badge: "Good",
+      title: "Certified quick human",
+      copy: "Solid run. Your brain saw the cue, filed the paperwork, and got it done on time.",
+      prompt: "Good · Press Try Again or hit Space",
+    };
+  }
+
+  if (score <= 340) {
+    return {
+      badge: "Fair",
+      title: "The gears were turning",
+      copy: "Respectable. Not lightning, not fossils. More like a very determined office microwave.",
+      prompt: "Fair · Press Try Again or hit Space",
+    };
+  }
+
+  return {
+    badge: "Poor",
+    title: "Your coffee is still buffering",
+    copy: "That one took the scenic route through the nervous system. No shame. We regroup, we click again.",
+    prompt: "Poor · Press Try Again or hit Space",
+  };
+}
+
 function loadStats() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -260,52 +360,56 @@ function loadStats() {
     return { attempts: [] };
   }
 }
+
 function saveStats(stats) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(stats));
 }
+
 function randomBetween(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
+
 function playTone(frequency, duration, type = "sine") {
   const AudioContextClass = window.AudioContext || window.webkitAudioContext;
   if (!AudioContextClass) return;
+
   const context = new AudioContextClass();
   const oscillator = context.createOscillator();
   const gain = context.createGain();
+
   oscillator.type = type;
   oscillator.frequency.value = frequency;
   gain.gain.setValueAtTime(0.0001, context.currentTime);
   gain.gain.exponentialRampToValueAtTime(0.06, context.currentTime + 0.01);
-  gain.gain.exponentialRampToValueAtTime(
-    0.0001,
-    context.currentTime + duration,
-  );
+  gain.gain.exponentialRampToValueAtTime(0.0001, context.currentTime + duration);
+
   oscillator.connect(gain);
   gain.connect(context.destination);
   oscillator.start();
   oscillator.stop(context.currentTime + duration);
   oscillator.onended = () => context.close();
 }
+
 function createScene(canvas, options = {}) {
   const reduceMotion = Boolean(options.reduceMotion);
+
   const renderer = new THREE.WebGLRenderer({
     canvas,
     antialias: true,
     alpha: true,
     powerPreference: "high-performance",
   });
+  renderer.setClearColor(0x000000, 0);
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   renderer.setSize(window.innerWidth, window.innerHeight);
+
   const scene = new THREE.Scene();
-  const camera = new THREE.PerspectiveCamera(
-    42,
-    window.innerWidth / window.innerHeight,
-    0.1,
-    100,
-  );
+  const camera = new THREE.PerspectiveCamera(42, window.innerWidth / window.innerHeight, 0.1, 100);
   camera.position.set(0, 0, 7.5);
+
   const group = new THREE.Group();
   scene.add(group);
+
   const coreGeometry = new THREE.IcosahedronGeometry(1.2, 0);
   const coreMaterial = new THREE.MeshStandardMaterial({
     color: new THREE.Color("#3b82f6"),
@@ -316,6 +420,7 @@ function createScene(canvas, options = {}) {
   });
   const core = new THREE.Mesh(coreGeometry, coreMaterial);
   group.add(core);
+
   const ringGeometry = new THREE.TorusGeometry(2.2, 0.04, 16, 120);
   const ringMaterial = new THREE.MeshBasicMaterial({
     color: new THREE.Color("#3b82f6"),
@@ -326,18 +431,18 @@ function createScene(canvas, options = {}) {
   ring.rotation.x = Math.PI * 0.38;
   ring.rotation.y = Math.PI * 0.18;
   group.add(ring);
+
   const particleCount = 220;
   const particlesGeometry = new THREE.BufferGeometry();
   const positions = new Float32Array(particleCount * 3);
+
   for (let i = 0; i < particleCount; i += 1) {
     positions[i * 3] = (Math.random() - 0.5) * 18;
     positions[i * 3 + 1] = (Math.random() - 0.5) * 12;
     positions[i * 3 + 2] = (Math.random() - 0.5) * 12;
   }
-  particlesGeometry.setAttribute(
-    "position",
-    new THREE.BufferAttribute(positions, 3),
-  );
+
+  particlesGeometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
   const particlesMaterial = new THREE.PointsMaterial({
     color: new THREE.Color("#94a3b8"),
     size: 0.03,
@@ -346,14 +451,18 @@ function createScene(canvas, options = {}) {
   });
   const particles = new THREE.Points(particlesGeometry, particlesMaterial);
   scene.add(particles);
+
   const ambient = new THREE.AmbientLight(0xffffff, 1.15);
   scene.add(ambient);
+
   const keyLight = new THREE.PointLight(0x3b82f6, 16, 20, 2);
   keyLight.position.set(2.5, 2, 5.5);
   scene.add(keyLight);
+
   const fillLight = new THREE.PointLight(0x22c55e, 0, 16, 2);
   fillLight.position.set(-2.5, -1.5, 4);
   scene.add(fillLight);
+
   const target = {
     rotationSpeed: reduceMotion ? 0.0006 : 0.003,
     ringSpeed: reduceMotion ? 0.0008 : 0.004,
@@ -365,8 +474,13 @@ function createScene(canvas, options = {}) {
     fillIntensity: 0,
     particleOpacity: 0.55,
   };
-  const burstState = { amount: 0 };
+
+  const burstState = {
+    amount: 0,
+  };
+
   const clock = new THREE.Clock();
+
   function setMood(mood) {
     switch (mood) {
       case "waiting":
@@ -422,62 +536,64 @@ function createScene(canvas, options = {}) {
         break;
     }
   }
+
   function burst() {
     burstState.amount = 1;
   }
+
   function resize() {
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
     renderer.setSize(window.innerWidth, window.innerHeight);
   }
-  function animate() {
+
+  let lastFrame = performance.now();
+
+  function animate(now = performance.now()) {
     const elapsed = clock.getElapsedTime();
+    const delta = Math.min((now - lastFrame) / 16.6667, 2);
+    lastFrame = now;
+
     if (!reduceMotion) {
-      core.rotation.x += target.rotationSpeed * 0.8;
-      core.rotation.y += target.rotationSpeed;
-      ring.rotation.z += target.ringSpeed;
+      core.rotation.x += target.rotationSpeed * 0.8 * delta;
+      core.rotation.y += target.rotationSpeed * delta;
+      ring.rotation.z += target.ringSpeed * delta;
       group.position.y = Math.sin(elapsed * 0.8) * target.bob;
       particles.rotation.y = elapsed * 0.01;
     }
+
     burstState.amount = THREE.MathUtils.lerp(burstState.amount, 0, 0.08);
     const scaleBurst = 1 + burstState.amount * 0.18;
-    group.scale.x = THREE.MathUtils.lerp(
-      group.scale.x,
-      target.scale * scaleBurst,
-      0.08,
-    );
-    group.scale.y = THREE.MathUtils.lerp(
-      group.scale.y,
-      target.scale * scaleBurst,
-      0.08,
-    );
-    group.scale.z = THREE.MathUtils.lerp(
-      group.scale.z,
-      target.scale * scaleBurst,
-      0.08,
-    );
+
+    group.scale.x = THREE.MathUtils.lerp(group.scale.x, target.scale * scaleBurst, 0.08);
+    group.scale.y = THREE.MathUtils.lerp(group.scale.y, target.scale * scaleBurst, 0.08);
+    group.scale.z = THREE.MathUtils.lerp(group.scale.z, target.scale * scaleBurst, 0.08);
+
     coreMaterial.color.lerp(target.coreColor, 0.08);
     coreMaterial.emissive.lerp(target.emissiveColor, 0.08);
     ringMaterial.color.lerp(target.ringColor, 0.08);
     ringMaterial.opacity = THREE.MathUtils.lerp(
       ringMaterial.opacity,
       target.fillIntensity > 0 ? 0.5 : 0.35,
-      0.08,
+      0.08
     );
-    fillLight.intensity = THREE.MathUtils.lerp(
-      fillLight.intensity,
-      target.fillIntensity,
-      0.08,
-    );
+    fillLight.intensity = THREE.MathUtils.lerp(fillLight.intensity, target.fillIntensity, 0.08);
     particlesMaterial.opacity = THREE.MathUtils.lerp(
       particlesMaterial.opacity,
       target.particleOpacity,
-      0.08,
+      0.08
     );
+
     renderer.render(scene, camera);
     requestAnimationFrame(animate);
   }
+
   setMood("idle");
   animate();
-  return { setMood, burst, resize };
+
+  return {
+    setMood,
+    burst,
+    resize,
+  };
 }
