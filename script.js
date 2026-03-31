@@ -69,9 +69,19 @@ const uiCopy = {
   },
 };
 
-const sceneController = createScene(document.getElementById("scene"), {
-  reduceMotion: state.reduceMotion,
-});
+let sceneController = {
+  setMood: () => {},
+  burst: () => {},
+  resize: () => {},
+};
+
+try {
+  sceneController = createScene(document.getElementById("scene"), {
+    reduceMotion: state.reduceMotion,
+  });
+} catch (error) {
+  console.error("Scene creation failed:", error);
+}
 
 init();
 
@@ -228,9 +238,15 @@ function setPhase(phase, timingOverride = null) {
   } else if (phase === "error") {
     statusCard.setAttribute("aria-label", "False start. Try again.");
   } else if (phase === "result") {
-    statusCard.setAttribute("aria-label", `Result recorded. ${timingOverride}.`);
+    statusCard.setAttribute(
+      "aria-label",
+      `Result recorded. ${timingOverride}.`,
+    );
   } else {
-    statusCard.setAttribute("aria-label", "Reaction test area. Press Start, then wait for the cue.");
+    statusCard.setAttribute(
+      "aria-label",
+      "Reaction test area. Press Start, then wait for the cue.",
+    );
   }
 }
 
@@ -269,21 +285,20 @@ function updateStatsUI() {
     return;
   }
 
-  [...state.stats.attempts]
-    .reverse()
-    .forEach((attempt, index) => {
-      const item = document.createElement("li");
+  [...state.stats.attempts].reverse().forEach((attempt, index) => {
+    const item = document.createElement("li");
 
-      const label = document.createElement("span");
-      label.textContent = index === 0 ? "Most recent" : `Attempt ${values.length - index}`;
+    const label = document.createElement("span");
+    label.textContent =
+      index === 0 ? "Most recent" : `Attempt ${values.length - index}`;
 
-      const value = document.createElement("span");
-      value.className = "history-score";
-      value.textContent = `${attempt.value} ms`;
+    const value = document.createElement("span");
+    value.className = "history-score";
+    value.textContent = `${attempt.value} ms`;
 
-      item.append(label, value);
-      historyListEl.appendChild(item);
-    });
+    item.append(label, value);
+    historyListEl.appendChild(item);
+  });
 }
 
 function resetStats() {
@@ -300,7 +315,7 @@ function applyReactionRating(score) {
   statusPrompt.textContent = rating.prompt;
   statusCard.setAttribute(
     "aria-label",
-    `Result recorded. ${score} milliseconds. ${rating.badge}. ${rating.title}.`
+    `Result recorded. ${score} milliseconds. ${rating.badge}. ${rating.title}.`,
   );
 }
 
@@ -381,7 +396,10 @@ function playTone(frequency, duration, type = "sine") {
   oscillator.frequency.value = frequency;
   gain.gain.setValueAtTime(0.0001, context.currentTime);
   gain.gain.exponentialRampToValueAtTime(0.06, context.currentTime + 0.01);
-  gain.gain.exponentialRampToValueAtTime(0.0001, context.currentTime + duration);
+  gain.gain.exponentialRampToValueAtTime(
+    0.0001,
+    context.currentTime + duration,
+  );
 
   oscillator.connect(gain);
   gain.connect(context.destination);
@@ -404,7 +422,12 @@ function createScene(canvas, options = {}) {
   renderer.setSize(window.innerWidth, window.innerHeight);
 
   const scene = new THREE.Scene();
-  const camera = new THREE.PerspectiveCamera(42, window.innerWidth / window.innerHeight, 0.1, 100);
+  const camera = new THREE.PerspectiveCamera(
+    42,
+    window.innerWidth / window.innerHeight,
+    0.1,
+    100,
+  );
   camera.position.set(0, 0, 7.5);
 
   const group = new THREE.Group();
@@ -442,7 +465,10 @@ function createScene(canvas, options = {}) {
     positions[i * 3 + 2] = (Math.random() - 0.5) * 12;
   }
 
-  particlesGeometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+  particlesGeometry.setAttribute(
+    "position",
+    new THREE.BufferAttribute(positions, 3),
+  );
   const particlesMaterial = new THREE.PointsMaterial({
     color: new THREE.Color("#94a3b8"),
     size: 0.03,
@@ -565,9 +591,21 @@ function createScene(canvas, options = {}) {
     burstState.amount = THREE.MathUtils.lerp(burstState.amount, 0, 0.08);
     const scaleBurst = 1 + burstState.amount * 0.18;
 
-    group.scale.x = THREE.MathUtils.lerp(group.scale.x, target.scale * scaleBurst, 0.08);
-    group.scale.y = THREE.MathUtils.lerp(group.scale.y, target.scale * scaleBurst, 0.08);
-    group.scale.z = THREE.MathUtils.lerp(group.scale.z, target.scale * scaleBurst, 0.08);
+    group.scale.x = THREE.MathUtils.lerp(
+      group.scale.x,
+      target.scale * scaleBurst,
+      0.08,
+    );
+    group.scale.y = THREE.MathUtils.lerp(
+      group.scale.y,
+      target.scale * scaleBurst,
+      0.08,
+    );
+    group.scale.z = THREE.MathUtils.lerp(
+      group.scale.z,
+      target.scale * scaleBurst,
+      0.08,
+    );
 
     coreMaterial.color.lerp(target.coreColor, 0.08);
     coreMaterial.emissive.lerp(target.emissiveColor, 0.08);
@@ -575,13 +613,17 @@ function createScene(canvas, options = {}) {
     ringMaterial.opacity = THREE.MathUtils.lerp(
       ringMaterial.opacity,
       target.fillIntensity > 0 ? 0.5 : 0.35,
-      0.08
+      0.08,
     );
-    fillLight.intensity = THREE.MathUtils.lerp(fillLight.intensity, target.fillIntensity, 0.08);
+    fillLight.intensity = THREE.MathUtils.lerp(
+      fillLight.intensity,
+      target.fillIntensity,
+      0.08,
+    );
     particlesMaterial.opacity = THREE.MathUtils.lerp(
       particlesMaterial.opacity,
       target.particleOpacity,
-      0.08
+      0.08,
     );
 
     renderer.render(scene, camera);
