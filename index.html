@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -30,8 +30,9 @@
           <div class="eyebrow">Portfolio Micro Interaction</div>
           <h1 id="page-title">Neon Reflex</h1>
           <p class="lede">
-            Test your reaction time against a clean visual cue. Start the run, wait for the signal,
-            then respond the instant the interface snaps alive.
+            Test your reaction time against a clean visual cue. Start the run,
+            wait for the signal, then respond the instant the interface snaps
+            alive.
           </p>
 
           <div
@@ -46,21 +47,30 @@
             <div class="status-badge" id="state-badge">Idle</div>
             <div class="status-title" id="status-title">Ready when you are</div>
             <p class="status-copy" id="status-copy">
-              Press <strong>Start</strong>, or hit <strong>Space</strong> or <strong>Enter</strong> to begin.
+              Press <strong>Start</strong>, or hit <strong>Space</strong> or
+              <strong>Enter</strong> to begin.
             </p>
-            <div class="status-timing" id="timing-display" aria-hidden="true">---</div>
+            <div class="status-timing" id="timing-display" aria-hidden="true">
+              ---
+            </div>
             <div class="status-prompt" id="status-prompt">Awaiting input</div>
           </div>
 
           <p class="sr-only" id="status-help">
-            Use mouse, touch, Space, or Enter. During the waiting state, reacting too early will count as a false start.
+            Use mouse, touch, Space, or Enter. During the waiting state,
+            reacting too early will count as a false start.
           </p>
 
           <div class="controls">
             <button class="button button-primary" id="start-btn" type="button">
               Start Test
             </button>
-            <button class="button button-secondary" id="retry-btn" type="button" hidden>
+            <button
+              class="button button-secondary"
+              id="retry-btn"
+              type="button"
+              hidden
+            >
               Try Again
             </button>
             <label class="toggle" for="sound-toggle">
@@ -87,10 +97,14 @@
           <section class="history" aria-labelledby="history-title">
             <div class="history-head">
               <h2 id="history-title">Recent Attempts</h2>
-              <button class="text-button" id="reset-stats-btn" type="button">Reset stats</button>
+              <button class="text-button" id="reset-stats-btn" type="button">
+                Reset stats
+              </button>
             </div>
             <ul class="history-list" id="history-list">
-              <li class="history-empty">No attempts yet. Your numbers will appear here.</li>
+              <li class="history-empty">
+                No attempts yet. Your numbers will appear here.
+              </li>
             </ul>
           </section>
         </section>
